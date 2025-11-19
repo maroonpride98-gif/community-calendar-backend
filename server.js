@@ -1,0 +1,85 @@
+require('dotenv').config();
+const express = require('express');
+const mongoose = require('mongoose');
+const cors = require('cors');
+const helmet = require('helmet');
+const morgan = require('morgan');
+const rateLimit = require('express-rate-limit');
+
+const app = express();
+
+// Import routes
+const authRoutes = require('./routes/auth');
+const eventRoutes = require('./routes/events');
+
+// Middleware
+app.use(helmet()); // Security headers
+app.use(morgan('combined')); // Logging
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// CORS
+const corsOptions = {
+  origin: process.env.CORS_ORIGIN?.split(',') || '*',
+  credentials: true,
+};
+app.use(cors(corsOptions));
+
+// Rate limiting
+const limiter = rateLimit({
+  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000,
+  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100,
+  message: 'Too many requests from this IP, please try again later.',
+});
+app.use('/api/', limiter);
+
+// Database connection
+mongoose
+  .connect(process.env.MONGODB_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
+  .then(() => console.log('✅ Connected to MongoDB'))
+  .catch((err) => console.error('❌ MongoDB connection error:', err));
+
+// Routes
+app.get('/api/health', (req, res) => {
+  res.json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+  });
+});
+
+app.use('/api/auth', authRoutes);
+app.use('/api/events', eventRoutes);
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error('Error:', err);
+
+  if (err.name === 'ValidationError') {
+    return res.status(400).json({
+      message: 'Validation error',
+      errors: Object.values(err.errors).map((e) => e.message),
+    });
+  }
+
+  if (err.name === 'UnauthorizedError') {
+    return res.status(401).json({ message: 'Invalid token' });
+  }
+
+  res.status(err.status || 500).json({
+    message: err.message || 'Internal server error',
+  });
+});
+
+// Start server
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`📍 Environment: ${process.env.NODE_ENV}`);
+  console.log(`🔗 API URL: http://localhost:${PORT}/api`);
+});
+
+module.exports = app;
