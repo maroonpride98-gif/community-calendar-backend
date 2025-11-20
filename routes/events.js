@@ -36,6 +36,7 @@ router.get('/', optionalAuth, async (req, res) => {
       query.$or = [
         { title: { $regex: search, $options: 'i' } },
         { description: { $regex: search, $options: 'i' } },
+        { location: { $regex: search, $options: 'i' } },
       ];
     }
 
