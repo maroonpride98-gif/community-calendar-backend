@@ -242,4 +242,75 @@ router.post('/:id/favorite', auth, async (req, res) => {
   }
 });
 
+// POST /api/events/:id/comments - Add a comment (requires auth)
+router.post('/:id/comments', auth, async (req, res) => {
+  try {
+    const { text } = req.body;
+
+    if (!text || text.trim().length === 0) {
+      return res.status(400).json({ message: 'Comment text is required' });
+    }
+
+    if (text.length > 500) {
+      return res.status(400).json({ message: 'Comment cannot exceed 500 characters' });
+    }
+
+    const event = await Event.findById(req.params.id);
+
+    if (!event) {
+      return res.status(404).json({ message: 'Event not found' });
+    }
+
+    // Add comment
+    event.comments.push({
+      user_id: req.userId,
+      username: req.user.username,
+      text: text.trim(),
+      created_at: new Date(),
+    });
+
+    await event.save();
+
+    // Return the new comment
+    const newComment = event.comments[event.comments.length - 1];
+    res.status(201).json({
+      _id: newComment._id,
+      user_id: newComment.user_id,
+      username: newComment.username,
+      text: newComment.text,
+      created_at: newComment.created_at,
+    });
+  } catch (error) {
+    console.error('Comment error:', error);
+    res.status(500).json({ message: 'Failed to add comment' });
+  }
+});
+
+// GET /api/events/:id/comments - Get all comments for an event
+router.get('/:id/comments', optionalAuth, async (req, res) => {
+  try {
+    const event = await Event.findById(req.params.id);
+
+    if (!event) {
+      return res.status(404).json({ message: 'Event not found' });
+    }
+
+    // Return comments sorted by newest first
+    const comments = event.comments
+      .sort((a, b) => b.created_at - a.created_at)
+      .map(c => ({
+        _id: c._id,
+        user_id: c.user_id,
+        username: c.username,
+        text: c.text,
+        created_at: c.created_at,
+      }));
+
+    res.json(comments);
+  } catch (error) {
+    console.error('Get comments error:', error);
+    res.status(500).json({ message: 'Failed to fetch comments' });
+  }
+});
+
 module.exports = router;

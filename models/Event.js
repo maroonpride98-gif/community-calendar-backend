@@ -87,6 +87,26 @@ const eventSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
   }],
+  comments: [{
+    user_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+    },
+    username: {
+      type: String,
+      required: true,
+    },
+    text: {
+      type: String,
+      required: true,
+      maxlength: [500, 'Comment cannot exceed 500 characters'],
+    },
+    created_at: {
+      type: Date,
+      default: Date.now,
+    },
+  }],
   created_at: {
     type: Date,
     default: Date.now,
