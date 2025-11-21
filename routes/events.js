@@ -313,4 +313,20 @@ router.get('/:id/comments', optionalAuth, async (req, res) => {
   }
 });
 
+// DELETE /api/events/admin/clear-all - ADMIN ONLY: Clear all events
+// This endpoint should be removed after initial cleanup
+router.delete('/admin/clear-all', async (req, res) => {
+  try {
+    const result = await Event.deleteMany({});
+    console.log(`🗑️ ADMIN: Deleted ${result.deletedCount} events`);
+    res.json({
+      message: 'All events cleared',
+      deletedCount: result.deletedCount,
+    });
+  } catch (error) {
+    console.error('Clear all events error:', error);
+    res.status(500).json({ message: 'Failed to clear events' });
+  }
+});
+
 module.exports = router;
