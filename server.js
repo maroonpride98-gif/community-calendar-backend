@@ -19,9 +19,25 @@ app.use(morgan('combined')); // Logging
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// CORS
+// CORS - Allow all origins by returning true for any origin
 const corsOptions = {
-  origin: process.env.CORS_ORIGIN?.split(',') || '*',
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl)
+    if (!origin) return callback(null, true);
+
+    // If CORS_ORIGIN is set to '*', allow all origins
+    if (process.env.CORS_ORIGIN === '*') {
+      return callback(null, true);
+    }
+
+    // Otherwise check if origin is in allowed list
+    const allowedOrigins = process.env.CORS_ORIGIN?.split(',') || [];
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      return callback(null, true);
+    }
+
+    return callback(new Error('Not allowed by CORS'));
+  },
   credentials: true,
 };
 app.use(cors(corsOptions));
