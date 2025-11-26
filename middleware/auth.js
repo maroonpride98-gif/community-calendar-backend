@@ -62,4 +62,26 @@ const optionalAuth = async (req, res, next) => {
   }
 };
 
-module.exports = { auth, optionalAuth };
+// Admin authorization middleware
+const adminAuth = async (req, res, next) => {
+  try {
+    // First run the regular auth middleware
+    await new Promise((resolve, reject) => {
+      auth(req, res, (err) => {
+        if (err) reject(err);
+        else resolve();
+      });
+    });
+
+    // Check if user is admin
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ message: 'Access denied. Admin privileges required.' });
+    }
+
+    next();
+  } catch (error) {
+    res.status(500).json({ message: 'Authorization error' });
+  }
+};
+
+module.exports = { auth, optionalAuth, adminAuth };

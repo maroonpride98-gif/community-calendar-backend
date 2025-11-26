@@ -11,6 +11,7 @@ const app = express();
 // Import routes
 const authRoutes = require('./routes/auth');
 const eventRoutes = require('./routes/events');
+const adminRoutes = require('./routes/admin');
 
 // Middleware
 app.use(helmet()); // Security headers
@@ -53,6 +54,7 @@ app.get('/api/health', (req, res) => {
 
 app.use('/api/auth', authRoutes);
 app.use('/api/events', eventRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

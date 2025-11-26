@@ -22,13 +22,18 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Password is required'],
     minlength: [6, 'Password must be at least 6 characters'],
+    maxlength: [100, 'Password is too long'],
   },
   zipcode: {
     type: String,
     required: [true, 'Zip code is required'],
-    match: [/^7[34]\d{3}$/, 'Must be a valid Oklahoma zip code (73000-74999)'],
+    match: [/^\d{5}(-\d{4})?$/, 'Please enter a valid zip code (5 digits, e.g., 12345)'],
   },
   emailVerified: {
+    type: Boolean,
+    default: false,
+  },
+  isAdmin: {
     type: Boolean,
     default: false,
   },
